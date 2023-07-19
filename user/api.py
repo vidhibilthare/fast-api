@@ -1,57 +1,98 @@
 from fastapi import APIRouter,Request,status,Depends
 from.models import *
-from . pydantic import Person
+from . pydantic import Person,Login,User_data
+from . pydantic import Token
 from fastapi.responses import JSONResponse
 from passlib.context import CryptContext
 from fastapi_login import LoginManager
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_login.exceptions import InvalidCredentialsException
+from fastapi.encoders import jsonable_encoder
+from passlib.context import CryptContext
 
-SECRET = "super-secret-key"
+# from fastapi_login import validate_password, generate_password_hash
+
+
 app = APIRouter()
+SECRET = 'your-secret-key'
 
-pwd_context = CryptContext(schemes=["bcrypt"],deprecated="auto")
+manager = LoginManager(SECRET, token_url='/user_login')
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-manager = LoginManager(SECRET, token_url='/auth/token')
+# PASSWORD_CONTEXT = CryptContext(schemes=['bcrypt'], deprecated='auto')
 
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+
+manager = LoginManager(SECRET, token_url='/login')
+
+# def verify_password(plain_password, hashed_password):
+#     return pwd_context.verify(plain_password, hashed_password)
+# async def verify_password(self, password):
+#     return validate_password(password, self.password)
 
 def get_password_hash(password):
     return pwd_context.hash(password)
 
+@manager.user_loader()
+async def load_user(email: str):
+    return await Student.get_or_none(email=email)
+
+# @app.post('/login/')
+# async def login(email: str, password: str):
+#     user = await load_user(email)
+#     if not user or not await user.verify_password(password):
+#         raise InvalidCredentialsException
+
+#     access_token = manager.create_access_token(data={'sub': user.email})
+#     return {'access_token': access_token}
+
+
+
 
 @app.post('/')
 async def registration(data:Person):
-    if await Student.exists(mobile=data.mobile):
+    if await Student.exists(mobile=data.phone):
         return{"status":False,"message":"Phone number already exists"}
     elif await Student.exists(email=data.email):
         return{"status":False,"message":"Email already exits"}
     else:
-        user_obj = await Student.create(name=data.name,email=data.email,mobile=data.mobile,password=get_password_hash(data.password))
+        user_obj = await Student.create(name=data.name,email=data.email,mobile=data.phone,password=get_password_hash(data.password))
         return user_obj
+    
 @app.get('/all/')
 async def all_student():
     user_object = await Student.all()
     return user_object
-    
-@manager.user_loader()
-def load_user(email: str):  # could also be an asynchronous function
-    user = Student.get(email)
-    return user
 
-@app.post('/auth/token')
-def login(data: OAuth2PasswordRequestForm = Depends()):
-    email = data.username
-    password = data.password
+@app.post('/get_data/')
+async def data(data:User_data):
+    user_obj = await Student.filter(id=data.id)
+    return user_obj
 
-    user = load_user(email)  # we are using the same function to retrieve the user
-    if not user:
-        raise InvalidCredentialsException  # you can also use your own HTTPException
-    elif password != user['password']:
-        raise InvalidCredentialsException
+@app.delete('/delete')
+async def delete_data(data:User_data):
+    user_obj = await Student.filter(id=data.id).delete()
+    return {"message": "User Delete"}
+
+@app.put('/update/')
+async def update_data(data:User_data):
+    user_obj = await Student.get(id=data.id)
     
-    access_token = manager.create_access_token(
-        data=dict(sub=email)
-    )
-    return {'access_token': access_token, 'token_type': 'bearer'}
+# @manager.user_loader()
+# async def load_user(email: str):
+#     if await Student.exists(email=email):
+#         user = await Student.get(email=email)
+#         return user
+
+# @app.post('/login/')
+# async def login(data: Login):
+#     email = data.email
+#     user = await load_user(email)
+ 
+#     if not user:
+#         return JSONResponse({'status': False, 'message': 'User not Registered'}, status_code=403)
+#     elif not verify_password(data.password, user.password):
+#         return JSONResponse({'status': False, 'message': 'Invalid password'}, status_code=403)
+#     access_token = manager.create_access_token(data={'sub': {'id': user.id}})
+#     new_dict = jsonable_encoder(user)
+#     new_dict.update({'access_token': access_token})
+#     return Token(access_token=access_token, token_type='bearer')
