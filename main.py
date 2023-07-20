@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from user import api as UserAPI
+from user import router as UserRouter
+
 from tortoise.contrib.fastapi import register_tortoise
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware import Middleware
@@ -13,6 +15,8 @@ middleware = [
 
 app = FastAPI(middleware=middleware)
 app.include_router(UserAPI.app)
+app.include_router(UserRouter.router)
+
 
 app.add_middleware(
     CORSMiddleware,

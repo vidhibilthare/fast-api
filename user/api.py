@@ -19,31 +19,17 @@ SECRET = 'your-secret-key'
 manager = LoginManager(SECRET, token_url='/user_login')
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# PASSWORD_CONTEXT = CryptContext(schemes=['bcrypt'], deprecated='auto')
 
 
 manager = LoginManager(SECRET, token_url='/login')
 
-# def verify_password(plain_password, hashed_password):
-#     return pwd_context.verify(plain_password, hashed_password)
-# async def verify_password(self, password):
-#     return validate_password(password, self.password)
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
 
 def get_password_hash(password):
     return pwd_context.hash(password)
 
-@manager.user_loader()
-async def load_user(email: str):
-    return await Student.get_or_none(email=email)
-
-# @app.post('/login/')
-# async def login(email: str, password: str):
-#     user = await load_user(email)
-#     if not user or not await user.verify_password(password):
-#         raise InvalidCredentialsException
-
-#     access_token = manager.create_access_token(data={'sub': user.email})
-#     return {'access_token': access_token}
 
 
 
@@ -76,6 +62,11 @@ async def delete_data(data:User_data):
 @app.put('/update/')
 async def update_data(data:User_data):
     user_obj = await Student.get(id=data.id)
+    if not user_obj:
+        return{"status":False,"message":"student is not exists"}
+    else:
+        user_obj=await Student.filter(id=data.id).update(name=data.name,email=data.email,phone=data.phone)
+        return user_obj
     
 # @manager.user_loader()
 # async def load_user(email: str):
