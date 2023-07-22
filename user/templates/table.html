@@ -28,12 +28,16 @@ tr:nth-child(even) {
     <th>Name</th>
     <th>Email</th>
     <th>Phone</th>
+    <th>Update</th>
+    <th>Delete</th>
   </tr>
   <tr>
     {% for d in user %}
     <td>{{d.name}}</td>
     <td>{{d.email}}</td>
     <td>{{d.mobile}}</td>
+    <td><a href="" type="submit" class="deletebtn">Delete</a></td>
+     <td> <a href="" type="submit" class="deletebtn">Update</a></td>
   </tr>
 {% endfor %}
 </table>

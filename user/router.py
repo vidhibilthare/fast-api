@@ -4,8 +4,11 @@ from . models import *
 from fastapi.responses import HTMLResponse,RedirectResponse 
 from passlib.context import CryptContext
 import typing
+import passlib
+
 
 router = APIRouter()
+
 
 templates = Jinja2Templates(directory="user/templates")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -60,3 +63,7 @@ async def read_userm(request:Request):
         "request":request
     })
     
+
+
+
+

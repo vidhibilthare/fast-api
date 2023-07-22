@@ -1,16 +1,19 @@
-from fastapi import APIRouter,Request,status,Depends
+from fastapi import APIRouter,Request,status,Depends,Form
 from.models import *
-from . pydantic import Person,Login,User_data
+from . pydantic import Person,Login,User_data,update_data
 from . pydantic import Token
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse,RedirectResponse,HTMLResponse
 from passlib.context import CryptContext
 from fastapi_login import LoginManager
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_login.exceptions import InvalidCredentialsException
 from fastapi.encoders import jsonable_encoder
 from passlib.context import CryptContext
+from json import JSONEncoder
+import typing
+import passlib
 
-# from fastapi_login import validate_password, generate_password_hash
+
 
 
 app = APIRouter()
@@ -68,22 +71,22 @@ async def update_data(data:User_data):
         user_obj=await Student.filter(id=data.id).update(name=data.name,email=data.email,phone=data.phone)
         return user_obj
     
-# @manager.user_loader()
-# async def load_user(email: str):
-#     if await Student.exists(email=email):
-#         user = await Student.get(email=email)
-#         return user
+@manager.user_loader()
+async def load_user(email: str):
+    if await Student.exists(email=email):
+        user = await Student.get(email=email)
+        return user
 
-# @app.post('/login/')
-# async def login(data: Login):
-#     email = data.email
-#     user = await load_user(email)
+@app.post('/login/')
+async def login(data: Login):
+    email = data.email
+    user = await load_user(email)
  
-#     if not user:
-#         return JSONResponse({'status': False, 'message': 'User not Registered'}, status_code=403)
-#     elif not verify_password(data.password, user.password):
-#         return JSONResponse({'status': False, 'message': 'Invalid password'}, status_code=403)
-#     access_token = manager.create_access_token(data={'sub': {'id': user.id}})
-#     new_dict = jsonable_encoder(user)
-#     new_dict.update({'access_token': access_token})
-#     return Token(access_token=access_token, token_type='bearer')
+    if not user:
+        return JSONResponse({'status': False, 'message': 'User not Registered'}, status_code=403)
+    elif not verify_password(data.password, user.password):
+        return JSONResponse({'status': False, 'message': 'Invalid password'}, status_code=403)
+    access_token = manager.create_access_token(data={'sub': {'id': user.id}})
+    new_dict = jsonable_encoder(user)
+    new_dict.update({'access_token': access_token})
+    return Token(access_token=access_token, token_type='bearer')
